@@ -1425,6 +1425,6 @@ char *image_name = NULL;
 		errexit = 2;
 	}
 	diskimage_close(part1);
-	diskimage_close(rawf);
+	if (part1 != rawf) diskimage_close(rawf);
 	return errexit;
 }
