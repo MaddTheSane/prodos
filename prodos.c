@@ -173,7 +173,7 @@ struct tarblock {
 	unsigned char data[10240];
 };
 
-struct diskimage *diskimage_fromfile(char *file)
+static struct diskimage *diskimage_fromfile(char *file)
 {
 struct diskimage *new;
 struct stat sbuf;
@@ -218,7 +218,7 @@ struct stat sbuf;
 	return new;
 }
 
-void diskimage_close(struct diskimage *d)
+static void diskimage_close(struct diskimage *d)
 {
 	if (d->type == 'f') {
 		close(d->fd);
@@ -228,7 +228,7 @@ void diskimage_close(struct diskimage *d)
 	free(d);
 }
 
-void *diskimage_block(struct diskimage *d, int block)
+static void *diskimage_block(struct diskimage *d, int block)
 {
 void *result;
 int i, fill;
@@ -264,7 +264,7 @@ int i, fill;
 	}
 }
 
-void diskimage_freeblock(struct diskimage *d, void *b)
+static void diskimage_freeblock(struct diskimage *d, void *b)
 {
 	if (d->type == 'f') {
 		free(b);
@@ -273,7 +273,7 @@ void diskimage_freeblock(struct diskimage *d, void *b)
 	}
 }
 
-struct diskimage *diskimage_makesub(struct diskimage *d, int start, int length)
+static struct diskimage *diskimage_makesub(struct diskimage *d, int start, int length)
 {
 struct diskimage *new;
 
@@ -294,7 +294,7 @@ struct diskimage *new;
 	return new;
 }
 
-struct prodos_fs *prodos_openfs(struct diskimage *d)
+static struct prodos_fs *prodos_openfs(struct diskimage *d)
 {
 unsigned char *superblock;
 struct prodos_fs *new;
@@ -358,7 +358,7 @@ notfound:
 	return NULL;
 }
 
-void prodos_closefs(struct prodos_fs *f)
+static void prodos_closefs(struct prodos_fs *f)
 {
 	free(f->curdir);
 	free(f->volname);
@@ -366,7 +366,7 @@ void prodos_closefs(struct prodos_fs *f)
 	free(f);
 }
 
-struct prodos_dir *prodos_opendir_atblock(struct prodos_fs *f, int keyblock)
+static struct prodos_dir *prodos_opendir_atblock(struct prodos_fs *f, int keyblock)
 {
 struct prodos_dir *new;
 int invalid_warned, i;
@@ -415,7 +415,7 @@ int invalid_warned, i;
 	return new;
 }
 
-int prodos_readdir(struct prodos_dir *d, struct prodos_file_info *sbuf)
+static int prodos_readdir(struct prodos_dir *d, struct prodos_file_info *sbuf)
 {
 int newblock;
 int base, i, mask;
@@ -478,7 +478,7 @@ int base, i, mask;
 		if (sbuf->min_version > 0x80) {
 			i = 0;
 			mask = (sbuf->min_version << 8) | sbuf->version;
-			for (i = 0; i < d->curblock[base] & 15; i++) {
+			for (i = 0; i < (d->curblock[base] & 15); i++) {
 				if (mask & 0x4000) {
 					if ((sbuf->filename[i] >= 'A') && (sbuf->filename[i] <= 'Z')) {
 						sbuf->filename[i] -= 'A'-'a';
@@ -492,7 +492,7 @@ int base, i, mask;
 	}
 }
 
-void prodos_closedir(struct prodos_dir *d)
+static void prodos_closedir(struct prodos_dir *d)
 {
 	if (d->curblock)
 		diskimage_freeblock(d->fs->im, d->curblock);
@@ -500,7 +500,7 @@ void prodos_closedir(struct prodos_dir *d)
 	free(d);
 }
 
-int prodos_resolvepath2(struct prodos_fs *f, char *path, int curblock, struct prodos_file_info *sbuf)
+static int prodos_resolvepath2(struct prodos_fs *f, char *path, int curblock, struct prodos_file_info *sbuf)
 {
 char *slash;
 struct prodos_dir *d;
@@ -537,7 +537,7 @@ int i;
 	return 0;
 }
 
-int prodos_stat_fromdirkey(struct prodos_fs *f, int keyblock, struct prodos_file_info *sbuf)
+static int prodos_stat_fromdirkey(struct prodos_fs *f, int keyblock, struct prodos_file_info *sbuf)
 {
 unsigned char *block;
 
@@ -569,7 +569,7 @@ unsigned char *block;
 	return 0;
 }
 
-int prodos_stat(struct prodos_fs *f, char *path, struct prodos_file_info *sbuf)
+static int prodos_stat(struct prodos_fs *f, char *path, struct prodos_file_info *sbuf)
 {
 int useblock;
 
@@ -588,7 +588,7 @@ int useblock;
 	return prodos_resolvepath2(f, path, useblock, sbuf);
 }
 
-int prodos_extended_stat(struct prodos_fs *f, struct prodos_file_info *sbuf)
+static int prodos_extended_stat(struct prodos_fs *f, struct prodos_file_info *sbuf)
 {
 unsigned char *keyblock;
 
@@ -618,7 +618,7 @@ unsigned char *keyblock;
 	return 0;
 }
 
-struct prodos_dir *prodos_opendir(struct prodos_fs *f, char *path)
+static struct prodos_dir *prodos_opendir(struct prodos_fs *f, char *path)
 {
 int err;
 struct prodos_file_info sbuf;
@@ -632,13 +632,13 @@ struct prodos_file_info sbuf;
 	return prodos_opendir_atblock(f, sbuf.key_pointer);
 }
 
-void prodos_close(struct prodos_file *f)
+static void prodos_close(struct prodos_file *f)
 {
 	diskimage_freeblock(f->fs->im, f->keyblock);
 	free(f);
 }
 
-struct prodos_file *prodos_open_statbuf(struct prodos_fs *f, struct prodos_file_info *sbuf, int rfork)
+static struct prodos_file *prodos_open_statbuf(struct prodos_fs *f, struct prodos_file_info *sbuf, int rfork)
 {
 struct prodos_file *new;
 
@@ -695,7 +695,7 @@ struct prodos_file *new;
 	return new;
 }
 
-struct prodos_file *prodos_open(struct prodos_fs *f, char *path, int rfork)
+static struct prodos_file *prodos_open(struct prodos_fs *f, char *path, int rfork)
 {
 int err;
 struct prodos_file_info sbuf;
@@ -708,7 +708,7 @@ struct prodos_file_info sbuf;
 	return prodos_open_statbuf(f, &sbuf, rfork);
 }
 
-int prodos_read(struct prodos_file *f, char *buf, int count)
+static int prodos_read(struct prodos_file *f, char *buf, int count)
 {
 int fill = 0;
 int realcount;
@@ -832,7 +832,7 @@ int i;
 	return fill;
 }
 
-void prodos_pretty_time(char *s, unsigned int tm)
+static void prodos_pretty_time(char *s, unsigned int tm)
 {
 	if (tm == 0) {
 		strcpy(s, "<NO DATE>");
@@ -855,8 +855,7 @@ void prodos_pretty_time(char *s, unsigned int tm)
 	   think Y2K was anticipated. */
 	sprintf(s, "%2d%s%04d %2d:%02d",
 		tm & 31,
-		"m00\0jan\0feb\0mar\0apr\0may\0jun\0jul\0aug\0sep\0oct\0nov\0dec\0m13\0m14\0m15" +
-			(((tm & 511) >> 3) & 0x3c),
+		(&"m00\0jan\0feb\0mar\0apr\0may\0jun\0jul\0aug\0sep\0oct\0nov\0dec\0m13\0m14\0m15")[(((tm & 511) >> 3) & 0x3c)],
 		((tm & 65535) >> 9) + 1900,
 		(tm >> 24) & 255,
 		(tm >> 16) & 255);
@@ -866,13 +865,13 @@ void prodos_pretty_time(char *s, unsigned int tm)
 	if ((tm & 0xffff0000) == 0) s[9] = 0;
 }
 
-void prodos_pretty_header(FILE *fp, struct prodos_dir *dir)
+static void prodos_pretty_header(FILE *fp, struct prodos_dir *dir)
 {
 	if (dir) fprintf(fp, "\n%s\n", dir->dirname);
 	fprintf(fp, "\n NAME           TYPE  BLOCKS  MODIFIED         CREATED          ENDFILE SUBTYPE\n\n");
 }
 
-void prodos_pretty_dir(FILE *fp, struct prodos_file_info *sbuf)
+static void prodos_pretty_dir(FILE *fp, struct prodos_file_info *sbuf)
 {
 char lock;
 char type[4];
@@ -915,7 +914,7 @@ char mod_t[20];
 		sbuf->length, auxtype);
 }
 
-struct partition_map *partition_map_fromimage(struct diskimage *im)
+static struct partition_map *partition_map_fromimage(struct diskimage *im)
 {
 struct partition_map *new;
 unsigned char *block;
@@ -972,7 +971,7 @@ notfound:
 	return NULL;
 }
 
-void partition_map_print(struct partition_map *pm, FILE *fp)
+static void partition_map_print(struct partition_map *pm, FILE *fp)
 {
 int i;
 int offset;
@@ -1008,7 +1007,7 @@ int base;
 	}
 }
 
-struct diskimage *partition_map_getpartition(struct partition_map *pm, int partnum)
+static struct diskimage *partition_map_getpartition(struct partition_map *pm, int partnum)
 {
 unsigned char *block;
 int length, abs_length;
@@ -1045,7 +1044,7 @@ int offset;
 	return diskimage_makesub(pm->im, abs_base, abs_length);
 }
 
-void usage(char *a0)
+static void usage(char *a0)
 {
 	fprintf(stderr,
 		"Usage: %s -i image [-p partition_number] command [args]\n"
@@ -1058,7 +1057,7 @@ void usage(char *a0)
 		a0);
 }
 
-time_t apple_to_unix_time(unsigned int appletime)
+static time_t apple_to_unix_time(unsigned int appletime)
 {
 struct tm tmb;
 time_t result;
@@ -1089,7 +1088,7 @@ time_t result;
 	}
 }
 
-int tar_dumpblock(struct tarblock *tbb)
+static int tar_dumpblock(struct tarblock *tbb)
 {
 int i, offset;
 
@@ -1103,7 +1102,7 @@ int i, offset;
 	return 10240;
 }
 
-int tar_writeblock(unsigned char *block, struct tarblock *tbb)
+static int tar_writeblock(unsigned char *block, struct tarblock *tbb)
 {
 	memcpy(tbb->data + (tbb->count * 512), block, 512);
 	tbb->count++;
@@ -1111,7 +1110,7 @@ int tar_writeblock(unsigned char *block, struct tarblock *tbb)
 	return 0;
 }
 
-int maketar2(struct prodos_fs *fs, struct prodos_file_info *sbuf, char *ext_name, struct tarblock *tbb)
+static int maketar2(struct prodos_fs *fs, struct prodos_file_info *sbuf, char *ext_name, struct tarblock *tbb)
 {
 unsigned char tarblock[512];
 unsigned char datablock[512];
@@ -1266,7 +1265,7 @@ int non_fatal_error = 0;
 	return non_fatal_error ? -2 : 0;
 }
 
-int maketar(struct prodos_fs *fs, char *path)
+static int maketar(struct prodos_fs *fs, char *path)
 {
 int err, err2;
 struct prodos_file_info sbuf;
